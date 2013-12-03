@@ -1,0 +1,29 @@
+{
+  "name": "WoWIRCBot",
+  "version": "0.0.0",
+  "description": "A node IRC bot designed to provide useful and fun functions to WoW-related IRC channels.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DSurguy/WoWIRCBot.git"
+  },
+  "keywords": [
+    "WoW",
+    "World",
+    "of",
+    "Warcraft",
+    "IRC",
+    "bot"
+  ],
+  "author": "Surguy.Derek@gmail.com",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/DSurguy/WoWIRCBot/issues"
+  },
+  "devDependencies": {
+    "irc": "~0.3.6"
+  }
+}
