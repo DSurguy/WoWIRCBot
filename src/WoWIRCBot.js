@@ -1,4 +1,5 @@
 var irc = require('irc'),
+	http = require('http'),
 	config = require('./config.js');
 
 module.exports = WoWIRCBot;
@@ -49,8 +50,50 @@ WoWIRCBot.prototype.parseMessage = function(from, to, command, params){
 };
 
 WoWIRCBot.prototype.wowis = function(from, target, params){
-	var bot = this;
-	bot.client.say(target, "You asked for a !wowis, but that's not quite implemented yet!");
+	var bot = this,
+		args = params.split(" "),
+		link = "http://us.battle.net/wow/en/character/";
+	if( args[1] ){
+		//the server name has been passed in, use it
+		link += args[1]+"/";
+	}
+	else{
+		//use the home server
+		if( config.bot.homeServ ){
+			link += config.bot.homeServ+"/";
+		}
+		else{
+			//we don't have a server to use!
+			bot.client.notice(from, "Unable to complete !wowis. No server specified in request or in config. Please contact channel admin.");
+			return false;
+		}
+	}
+
+	if( args[0].length == 0 ){
+		//this is a malformed request, alert the sender
+		bot.client.notice(from, "Malformed !wowis. Expected !wowis <characterName> [<serverName>], got !wowis <"+args[0]+"> [<"+args[1]+">]");
+		return false;
+	}
+	else{
+		//this is a proper request, add the character name
+		link += args[0]+"/advanced";
+	}
+	//send the link to the target of the request
+	bot.client.say(target, "!wowis for "+args[0]+": "+link);
+};
+
+/*
+*	Manage API calls
+*/
+WoWIRCBot.prototype.callAPI = function(type, params, options){
+	var url = "http://us.battle.net/api/wow/data/"
+	switch( type ){
+		case "character":
+			url += "character/"+params.server+"/"+params.character;
+			//now add all the available fields and store them for this request.
+			
+			break;
+	}
 };
 
 /*
