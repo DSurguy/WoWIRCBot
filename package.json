@@ -1,10 +1,11 @@
 {
   "name": "WoWIRCBot",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A node IRC bot designed to provide useful and fun functions to WoW-related IRC channels.",
-  "main": "src/index.js",
+  "main": "bot/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node bot/index.js"
   },
   "repository": {
     "type": "git",
