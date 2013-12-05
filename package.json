@@ -1,6 +1,6 @@
 {
   "name": "WoWIRCBot",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A node IRC bot designed to provide useful and fun functions to WoW-related IRC channels.",
   "main": "bot/index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "bugs": {
     "url": "https://github.com/DSurguy/WoWIRCBot/issues"
   },
-  "devDependencies": {
+  "dependencies": {
     "irc": "~0.3.6",
     "mongodb": "~1.3.20"
   }

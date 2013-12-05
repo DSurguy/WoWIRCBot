@@ -15,10 +15,10 @@ function WoWIRCBot(){
 
 		//create a new IRC client
 		bot.client = new irc.Client(
-			config.connect.host, 
-			config.connect.nick, 
+			config.irc.host, 
+			config.irc.nick, 
 			{
-				channels: config.connect.channels
+				channels: config.irc.channels
 			}
 		);	
 
@@ -70,8 +70,8 @@ WoWIRCBot.prototype.wowis = function(from, target, params){
 	}
 	else{
 		//use the home server
-		if( config.bot.homeServ ){
-			realm = config.bot.homeServ;
+		if( config.wow.homeRealm ){
+			realm = config.wow.homeRealm;
 		}
 		else{
 			//we don't have a server to use!
@@ -93,27 +93,28 @@ WoWIRCBot.prototype.wowis = function(from, target, params){
 	bot.getCharacter(realm, character, true, function(charExists){
 		if( charExists ){
 			//send the link to the target of the request
-			bot.client.say(target, "!wowis for "+args[0]+": "+armoryLink+realm+"/"+character+"/advanced");
+			bot.client.say(target, "\x0314"+"!wowis for "+args[0]+": "+armoryLink+realm+"/"+character+"/advanced");
 		}
 		else{
 			//send a message that the char doesn't exist to the target of the request
-			bot.client.say(target, "!wowis for "+args[0]+": Character not found!");	
+			bot.client.say(target, "\x0314"+"!wowis for "+args[0]+": Character not found!");	
 		}
 	});
 };
 
 WoWIRCBot.prototype.getCharacter = function(realm, character, justChecking, callback){
 	//build the request string
-	var url = config.bot.apiPath+"/character/"+realm+"/"+character+"?fields=guild,hunterPets,items,professions,progression,pvp,reputation,stats,talents",
+	var url = config.wow.apiPath+"/character/"+realm+"/"+character+"?fields=guild,hunterPets,items,professions,progression,pvp,reputation,stats,talents",
 		bot = this;
 	//check the local database to see if we already have the character
-	console.log("Looking for char in database");
+	console.log("Looking for char in database: "+character+" on "+realm);
 	bot.db.collection("characters").find({name: character, realm: realm}).toArray(function(err,chars){
 		if( err ){
 			console.log("Error looking for character. "+e.message);
 			return false;
 		}
 		//see if we got data
+		console.log(chars.length);
 		if( chars.length > 0 ){
 			//we got data, are we just checking to see if it exists?
 			if( justChecking ){
