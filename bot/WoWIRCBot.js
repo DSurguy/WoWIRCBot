@@ -155,7 +155,7 @@ WoWIRCBot.prototype.amr = function(from, target, params){
 	}
 
 	//check to see if this character exists
-	bot.getCharacter(realm, character, true, function(charExists){
+	bot.getCharacter(realm, character, region, true, function(charExists){
 		if( charExists ){
 			//send the link to the target of the request
 			bot.client.say(target, "\x0314"+"!amr for "+args[0]+": http://www.askmrrobot.com/wow/gear/"+region+"/"+realm+"/"+character);
