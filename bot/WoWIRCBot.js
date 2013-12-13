@@ -9,18 +9,20 @@ function WoWIRCBot(){
 	var bot = this;
 
 	//before connecting to the IRC network, create a mongo connection
+	console.log("Attempting to connect to db...");
 	mongo.connect(config.mongo.url, function(err, db){
 
 		bot.db = db;
 
 		//create a new IRC client
+		console.log("Attempting to connect to IRC on channels: "+config.irc.channels.join(","));
 		bot.client = new irc.Client(
 			config.irc.host, 
 			config.irc.nick, 
 			{
 				channels: config.irc.channels
 			}
-		);	
+		);
 
 		//bind a listener for the messages
 		bot.client.addListener('message', function (from, to, message) {
@@ -41,7 +43,7 @@ function WoWIRCBot(){
 		    console.log('error: ', message);
 		});
 	});
-}
+};
 
 WoWIRCBot.prototype.parseMessage = function(from, to, command, params){
 	//determine who we need to send this message to
@@ -62,7 +64,6 @@ WoWIRCBot.prototype.parseMessage = function(from, to, command, params){
 WoWIRCBot.prototype.wowis = function(from, target, params){
 	var bot = this,
 		args = params.split(" "),
-		armoryLink = "http://us.battle.net/wow/en/character/",
 		region, character, realm;
 
 	if( args[0].length == 0 ){
@@ -105,14 +106,14 @@ WoWIRCBot.prototype.wowis = function(from, target, params){
 	}	
 	
 	//check to see if this character exists
-	bot.getCharacter(realm, character, true, function(charExists){
+	bot.getCharacter(realm, character, region, true, function(charExists){
 		if( charExists ){
 			//send the link to the target of the request
 			bot.client.say(target, "\x0314"+"!wowis for "+args[0]+": http://"+region+".battle.net/wow/en/character/"+realm+"/"+character+"/advanced");
 		}
 		else{
 			//send a message that the char doesn't exist to the target of the request
-			bot.client.say(target, "\x0314"+"!wowis for "+args[0]+": Character not found!");	
+			bot.client.say(target, "\x0314"+"!wowis for <"+args[0]+"> [<"+args[1]+">] [<"+args[2]+">]: Character not found!");	
 		}
 	});
 };
@@ -132,18 +133,25 @@ WoWIRCBot.prototype.amr = function(from, target, params){
 		character = args[0];
 	}
 
-	if( args[1] == undefined ){
+	if( args[1] ){
+		realm = args[1];
+		
+	}
+	else if( config.wow.homeRealm) {
 		realm = config.wow.homeRealm;
 	}
 	else{
-		realm = args[1];
+		bot.client.notice(from, "Unable to complete !amr. No realm specified in request or in bot config. Please contact channel admin or supply a realm.");
 	}
 
-	if( args[2] == undefined ){
+	if( args[2] ){
+		region = bot.amr_Region(args[2]);
+	}
+	else if( config.wow.homeRegion) {
 		region = bot.amr_Region(config.wow.homeRegion);
 	}
 	else{
-		region = bot.amr_Region(args[2]);
+		bot.client.notice(from, "Unable to complete !amr. No region specified in request or in bot config. Please contact channel admin or supply a region.");
 	}
 
 	//check to see if this character exists
@@ -154,7 +162,7 @@ WoWIRCBot.prototype.amr = function(from, target, params){
 		}
 		else{
 			//send a message that the char doesn't exist to the target of the request
-			bot.client.say(target, "\x0314"+"!amr for "+args[0]+": Character not found!");	
+			bot.client.say(target, "\x0314"+"!amr for <"+args[0]+"> [<"+args[1]+">] [<"+args[2]+">]: Character not found!");	
 		}
 	});
 };
@@ -171,13 +179,14 @@ WoWIRCBot.prototype.amr_Region = function(region){
 	}
 }
 
-WoWIRCBot.prototype.getCharacter = function(realm, character, justChecking, callback){
+
+WoWIRCBot.prototype.getCharacter = function(realm, character, region, justChecking, callback){
 	//build the request string
-	var url = config.wow.apiPath+"/character/"+realm+"/"+character+"?fields=guild,hunterPets,items,professions,progression,pvp,reputation,stats,talents",
+	var url = "http://"+this.db_region(region)+".battle.net/api/wow/character/"+realm+"/"+character+"?fields=guild,hunterPets,items,professions,progression,pvp,reputation,stats,talents",
 		bot = this;
 	//check the local database to see if we already have the character
-	console.log("Looking for char in database: "+character+" on "+realm);
-	bot.db.collection("characters").find({name: character, realm: realm}).toArray(function(err,chars){
+	console.log("Looking for char in database: "+character+" on "+realm+" for region "+region);
+	bot.db.collection("characters_"+region).find({name: character, realm: realm}).toArray(function(err,chars){
 		if( err ){
 			console.log("Error looking for character. "+e.message);
 			return false;
@@ -220,7 +229,7 @@ WoWIRCBot.prototype.getCharacter = function(realm, character, justChecking, call
 					else{
 						//we need to add this character to the database
 						console.log("Attempting to add character to the database");
-						bot.db.collection("characters").insert(newChar, function(err){
+						bot.db.collection("characters_"+region).insert(newChar, function(err){
 							if( err ){
 								console.log("Error looking for character. "+e.message);
 								return false;
@@ -241,7 +250,16 @@ WoWIRCBot.prototype.getCharacter = function(realm, character, justChecking, call
 		}
 	});
 };
-
+WoWIRCBot.prototype.db_region = function(region){
+	switch(region){
+		case "us":
+		case "usa":
+		default:
+			return "us";
+		case "eu":
+			return "eu";
+	}
+}
 /*
 *	Enable/Disable commands
 */

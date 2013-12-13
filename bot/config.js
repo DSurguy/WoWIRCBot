@@ -73,16 +73,14 @@ if( secret.wow ){
     //pull from secret data and fallback to defaults
     config.wow = {
         homeRealm: secret.wow.homeRealm || 'Draenor',
-        homeRegion: secret.wow.homeRegion || 'us',
-        apiPath: secret.wow.apiPath || 'http://us.battle.net/api/wow/'
+        homeRegion: secret.wow.homeRegion || 'us'
     };
 }
 else{
     //use defaults
     config.wow = {
         homeRealm: 'Draenor',
-        homeRegion: 'us',
-        apiPath: 'http://us.battle.net/api/wow/'
+        homeRegion: 'us'
     };
 }
 
