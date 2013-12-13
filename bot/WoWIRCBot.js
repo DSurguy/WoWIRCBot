@@ -92,7 +92,7 @@ WoWIRCBot.prototype.wowis = function(from, target, params){
 
 	if( args[2] ){
 		//the server region was passed in
-		region = args[1]
+		region = args[2]
 	}
 	else if( config.wow.homeRegion ){
 		//use the home region
