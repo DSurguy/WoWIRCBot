@@ -58,42 +58,57 @@ WoWIRCBot.prototype.parseMessage = function(from, to, command, params){
 	this[command](from, target, params);
 };
 
+// !wowis <character> [<realm>] [<region>]
 WoWIRCBot.prototype.wowis = function(from, target, params){
 	var bot = this,
 		args = params.split(" "),
 		armoryLink = "http://us.battle.net/wow/en/character/",
-		character, realm;
-
-	if( args[1] ){
-		//the server name has been passed in, use it
-		realm = args[1]
-	}
-	else{
-		//use the home server
-		if( config.wow.homeRealm ){
-			realm = config.wow.homeRealm;
-		}
-		else{
-			//we don't have a server to use!
-			bot.client.notice(from, "Unable to complete !wowis. No realm specified in request or in bot config. Please contact channel admin or supply a realm.");
-			return false;
-		}
-	}
+		region, character, realm;
 
 	if( args[0].length == 0 ){
 		//this is a malformed request, alert the sender
-		bot.client.notice(from, "Malformed !wowis. Expected !wowis <characterName> [<serverName>], got !wowis <"+args[0]+"> [<"+args[1]+">]");
+		bot.client.notice(from, "Malformed !wowis. Expected !wowis <characterName> [<serverName>] [<region>], got !wowis <"+args[0]+"> [<"+args[1]+">] [<"+args[2]+">]");
 		return false;
 	}
 	else{
 		//this is a proper request, add the character name
 		character = args[0];
 	}
+
+	if( args[1] ){
+		//the server name has been passed in, use it
+		realm = args[1]
+	}
+	else if( config.wow.homeRealm ){
+		//use the home server
+		realm = config.wow.homeRealm;
+	}
+	else{
+		//we don't have a server to use!
+		bot.client.notice(from, "Unable to complete !wowis. No realm specified in request or in bot config. Please contact channel admin or supply a realm.");
+		return false;
+	}
+
+
+	if( args[2] ){
+		//the server region was passed in
+		region = args[1]
+	}
+	else if( config.wow.homeRegion ){
+		//use the home region
+		region = config.wow.homeRegion;
+	}
+	else{
+		//we don't have a region to use!
+		bot.client.notice(from, "Unable to complete !wowis. No region specified in request or in bot config. Please contact channel admin or supply a realm.");
+		return false;
+	}	
+	
 	//check to see if this character exists
 	bot.getCharacter(realm, character, true, function(charExists){
 		if( charExists ){
 			//send the link to the target of the request
-			bot.client.say(target, "\x0314"+"!wowis for "+args[0]+": "+armoryLink+realm+"/"+character+"/advanced");
+			bot.client.say(target, "\x0314"+"!wowis for "+args[0]+": http://"+region+".battle.net/wow/en/character/"+realm+"/"+character+"/advanced");
 		}
 		else{
 			//send a message that the char doesn't exist to the target of the request
@@ -101,6 +116,60 @@ WoWIRCBot.prototype.wowis = function(from, target, params){
 		}
 	});
 };
+
+// !amr <character> [<realm>] [<region>]
+WoWIRCBot.prototype.amr = function(from, target, params){
+	var bot = this,
+		args = params.split(" "),
+		region, character, realm;
+
+	if( args[0].length == 0 ){
+		//this is a malformed request, alert the sender
+		bot.client.notice(from, "Malformed !amr. Expected !amr <character> [<realm>] [<region>], got !amr <"+args[0]+"> [<"+args[1]+">] [<"+args[2]+">]");
+		return false;
+	}
+	else{
+		character = args[0];
+	}
+
+	if( args[1] == undefined ){
+		realm = config.wow.homeRealm;
+	}
+	else{
+		realm = args[1];
+	}
+
+	if( args[2] == undefined ){
+		region = bot.amr_Region(config.wow.homeRegion);
+	}
+	else{
+		region = bot.amr_Region(args[2]);
+	}
+
+	//check to see if this character exists
+	bot.getCharacter(realm, character, true, function(charExists){
+		if( charExists ){
+			//send the link to the target of the request
+			bot.client.say(target, "\x0314"+"!amr for "+args[0]+": http://www.askmrrobot.com/wow/gear/"+region+"/"+realm+"/"+character);
+		}
+		else{
+			//send a message that the char doesn't exist to the target of the request
+			bot.client.say(target, "\x0314"+"!amr for "+args[0]+": Character not found!");	
+		}
+	});
+};
+WoWIRCBot.prototype.amr_Region = function(region){
+	switch(region){
+		case "us":
+		case "usa":
+		default:
+			return "usa";
+			break;
+		case "eu":
+			return "eu";
+			break;
+	}
+}
 
 WoWIRCBot.prototype.getCharacter = function(realm, character, justChecking, callback){
 	//build the request string
@@ -178,5 +247,6 @@ WoWIRCBot.prototype.getCharacter = function(realm, character, justChecking, call
 */
 
 WoWIRCBot.prototype.commands = {
-	wowis: true
+	wowis: true,
+	amr: true
 };
