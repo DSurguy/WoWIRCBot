@@ -1,7 +1,8 @@
 var irc = require('irc'),
 	http = require('http'),
 	mongo = require('mongodb').MongoClient,
-	config = require('./config.js');
+	config = require('./config.js'),
+    docs = require('./Docs.js');
 
 module.exports = WoWIRCBot;
 
@@ -43,7 +44,7 @@ function WoWIRCBot(){
 		    console.log('error: ', message);
 		});
 	});
-};
+}
 
 WoWIRCBot.prototype.parseMessage = function(from, to, command, params){
 	//determine who we need to send this message to
@@ -58,6 +59,44 @@ WoWIRCBot.prototype.parseMessage = function(from, to, command, params){
 	}
 	//now actually process the command
 	this[command](from, target, params);
+};
+
+
+//!help [<command>]
+WoWIRCBot.prototype.help = function(from, to, params){
+    var bot = this,
+        args = params.split(" "),
+        target,
+        sampleVar = undefined;
+    //determine who we need to send this message to
+    if( to[0] === "#" || to[0] === "&" ){
+        //this message was sent to a channel, so we should output to the channel
+        target = to;
+    }
+    else{
+        //this was sent directly to the bot, send it only to the sender
+        target = from;
+    }
+
+    var requestedDoc = bot.routeHelp(args[0]);
+
+};
+
+//Router for help command
+WoWIRCBot.prototype.routeHelp = function(requestedArticle){
+    switch(requestedArticle){
+        case "wowis":
+        case "!wowis":
+            return docs.Commands.wowis;
+            break;
+        case "amr":
+        case "!amr":
+            return docs.Commands.amr;
+            break;
+        default:
+            return undefined;
+            break;
+    }
 };
 
 // !wowis <character> [<realm>] [<region>]
@@ -177,7 +216,7 @@ WoWIRCBot.prototype.amr_Region = function(region){
 			return "eu";
 			break;
 	}
-}
+};
 
 
 WoWIRCBot.prototype.getCharacter = function(realm, character, region, justChecking, callback){
@@ -259,12 +298,13 @@ WoWIRCBot.prototype.db_region = function(region){
 		case "eu":
 			return "eu";
 	}
-}
+};
 /*
 *	Enable/Disable commands
 */
 
 WoWIRCBot.prototype.commands = {
 	wowis: true,
-	amr: true
+	amr: true,
+    help: true
 };

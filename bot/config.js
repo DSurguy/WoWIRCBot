@@ -39,7 +39,7 @@ var generate_mongo_url = function(obj){
     else{
         return "mongodb://" + obj.hostname + ":" + obj.port + "/" + obj.db;
     }
-}
+};
 config.mongo = {
     url: generate_mongo_url(mongo)
 };
@@ -96,4 +96,4 @@ else{
 
 
 //export the config options
-module.exports = config
+module.exports = config;

@@ -4,12 +4,12 @@ module.exports = {
 		port: 0, //default for localhost is 27017
 		username: "dbuser", 
 		password: "1234",
-		db: "wowircbot",
+		db: "wowircbot"
 	},
 	irc: {
 		host: "sub.domain.ext", //ex: us.quakenet.org
 		nick: "WoWIRCBot", //ex: JimmyWoWBot
-		channels: ["#Zuultest"] //Ex: ["#myGuild","#yourGuild","#AllTheGuilds"]
+		channels: ["#DSurgeTest"] //Ex: ["#myGuild","#yourGuild","#AllTheGuilds"]
 	},
 	wow: {
 		homeRealm: "Draenor", //This is my home, it might not be yours!
