@@ -72,7 +72,7 @@ WoWIRCBot.prototype.help = function(from, to, params){
     //TODO: This may need to be async to avoid flood
     //loop through the lines of the doc and spit them out to the user
     for( var i=0; i<requestedDoc.length; i++ ){
-        bot.client.notice(target, requestedDoc[i]);
+        bot.client.say(target, requestedDoc[i]);
     }
 };
 
