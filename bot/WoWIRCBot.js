@@ -2,7 +2,7 @@ var irc = require('irc'),
 	http = require('http'),
 	mongo = require('mongodb').MongoClient,
 	config = require('./config.js'),
-    docs = require('./Docs.js');
+    Docs = require('./Docs.js');
 
 module.exports = WoWIRCBot;
 
@@ -66,8 +66,7 @@ WoWIRCBot.prototype.parseMessage = function(from, to, command, params){
 WoWIRCBot.prototype.help = function(from, to, params){
     var bot = this,
         args = params.split(" "),
-        target,
-        sampleVar = undefined;
+        target;
     //determine who we need to send this message to
     if( to[0] === "#" || to[0] === "&" ){
         //this message was sent to a channel, so we should output to the channel
@@ -77,26 +76,27 @@ WoWIRCBot.prototype.help = function(from, to, params){
         //this was sent directly to the bot, send it only to the sender
         target = from;
     }
-
+    //get the doc the user requested
     var requestedDoc = bot.routeHelp(args[0]);
-
+    //TODO: This may need to be async to avoid flood
+    //loop through the lines of the doc and spit them out to the user
+    for( var i=0; i<requestedDoc.length; i++ ){
+        bot.client.say(target, requestedDoc[i]);
+    }
 };
 
 //Router for help command
 WoWIRCBot.prototype.routeHelp = function(requestedArticle){
-    switch(requestedArticle){
-        case "wowis":
-        case "!wowis":
-            return docs.Commands.wowis;
-            break;
-        case "amr":
-        case "!amr":
-            return docs.Commands.amr;
-            break;
-        default:
-            return undefined;
-            break;
+    //grab the related help doc
+    for( var i=0; i<Docs.Manifest.length; i++ ){
+        var regex = new RegExp("\b"+requestedArticle+"\b", "g");
+        if( Docs.Manifest[i].search(regex) !== -1 ){
+            //we have a match, return this doc!
+            return Docs.Manifest[i].docMap;
+        }
     }
+    //if we make it here, we haven't found a document! Return the error message, replacing {0} with the request
+    return Docs.Error.replace("{0}", requestedArticle);
 };
 
 // !wowis <character> [<realm>] [<region>]
@@ -107,7 +107,7 @@ WoWIRCBot.prototype.wowis = function(from, target, params){
 
 	if( args[0].length == 0 ){
 		//this is a malformed request, alert the sender
-		bot.client.notice(from, "Malformed !wowis. Expected !wowis <characterName> [<serverName>] [<region>], got !wowis <"+args[0]+"> [<"+args[1]+">] [<"+args[2]+">]");
+		bot.client.notice(from, "Malformed !wowis. Expected !wowis <characterName> [<serverName>] [<region>], got !wowis <"+args[0]+"> [<"+args[1]+">] [<"+args[2]+">]. See '!help wowis' for more information.");
 		return false;
 	}
 	else{
@@ -125,7 +125,7 @@ WoWIRCBot.prototype.wowis = function(from, target, params){
 	}
 	else{
 		//we don't have a server to use!
-		bot.client.notice(from, "Unable to complete !wowis. No realm specified in request or in bot config. Please contact channel admin or supply a realm.");
+		bot.client.notice(from, "Unable to complete !wowis. No realm specified in request or in bot config. Please contact channel admin or supply a realm. See '!help wowis' for more information.");
 		return false;
 	}
 
@@ -140,7 +140,7 @@ WoWIRCBot.prototype.wowis = function(from, target, params){
 	}
 	else{
 		//we don't have a region to use!
-		bot.client.notice(from, "Unable to complete !wowis. No region specified in request or in bot config. Please contact channel admin or supply a realm.");
+		bot.client.notice(from, "Unable to complete !wowis. No region specified in request or in bot config. Please contact channel admin or supply a realm. See '!help wowis' for more information.");
 		return false;
 	}	
 	
@@ -165,7 +165,7 @@ WoWIRCBot.prototype.amr = function(from, target, params){
 
 	if( args[0].length == 0 ){
 		//this is a malformed request, alert the sender
-		bot.client.notice(from, "Malformed !amr. Expected !amr <character> [<realm>] [<region>], got !amr <"+args[0]+"> [<"+args[1]+">] [<"+args[2]+">]");
+		bot.client.notice(from, "Malformed !amr. Expected !amr <character> [<realm>] [<region>], got !amr <"+args[0]+"> [<"+args[1]+">] [<"+args[2]+">]. See '!help amr' for more information.");
 		return false;
 	}
 	else{
@@ -180,7 +180,7 @@ WoWIRCBot.prototype.amr = function(from, target, params){
 		realm = config.wow.homeRealm;
 	}
 	else{
-		bot.client.notice(from, "Unable to complete !amr. No realm specified in request or in bot config. Please contact channel admin or supply a realm.");
+		bot.client.notice(from, "Unable to complete !amr. No realm specified in request or in bot config. Please contact channel admin or supply a realm. See '!help amr' for more information.");
 	}
 
 	if( args[2] ){
@@ -190,7 +190,7 @@ WoWIRCBot.prototype.amr = function(from, target, params){
 		region = bot.amr_Region(config.wow.homeRegion);
 	}
 	else{
-		bot.client.notice(from, "Unable to complete !amr. No region specified in request or in bot config. Please contact channel admin or supply a region.");
+		bot.client.notice(from, "Unable to complete !amr. No region specified in request or in bot config. Please contact channel admin or supply a region. See '!help amr' for more information.");
 	}
 
 	//check to see if this character exists
