@@ -66,37 +66,33 @@ WoWIRCBot.prototype.parseMessage = function(from, to, command, params){
 WoWIRCBot.prototype.help = function(from, to, params){
     var bot = this,
         args = params.split(" "),
-        target;
-    //determine who we need to send this message to
-    if( to[0] === "#" || to[0] === "&" ){
-        //this message was sent to a channel, so we should output to the channel
-        target = to;
-    }
-    else{
-        //this was sent directly to the bot, send it only to the sender
         target = from;
-    }
     //get the doc the user requested
     var requestedDoc = bot.routeHelp(args[0]);
     //TODO: This may need to be async to avoid flood
     //loop through the lines of the doc and spit them out to the user
     for( var i=0; i<requestedDoc.length; i++ ){
-        bot.client.say(target, requestedDoc[i]);
+        bot.client.notice(target, requestedDoc[i]);
     }
 };
 
 //Router for help command
 WoWIRCBot.prototype.routeHelp = function(requestedArticle){
     //grab the related help doc
+    var regex = new RegExp("\\b"+requestedArticle+"\\b", "g");
     for( var i=0; i<Docs.Manifest.length; i++ ){
-        var regex = new RegExp("\b"+requestedArticle+"\b", "g");
-        if( Docs.Manifest[i].search(regex) !== -1 ){
+        if( Docs.Manifest[i].cmd.search(regex) !== -1 ){
             //we have a match, return this doc!
-            return Docs.Manifest[i].docMap;
+            var docPath = Docs,
+                map = Docs.Manifest[i].docMap.split(".");
+            for( var j=0; j<map.length; j++ ){
+                docPath = docPath[map[j]];
+            }
+            return docPath;
         }
     }
     //if we make it here, we haven't found a document! Return the error message, replacing {0} with the request
-    return Docs.Error.replace("{0}", requestedArticle);
+    return Docs.Error(requestedArticle);
 };
 
 // !wowis <character> [<realm>] [<region>]
