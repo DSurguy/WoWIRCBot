@@ -30,7 +30,7 @@ else{
         username: undefined,
         password: undefined,
         db: "db"
-    }
+    };
 }
 var generate_mongo_url = function(obj){
     if(obj.username && obj.password){
@@ -52,7 +52,7 @@ if( secret.irc ){
     //pull from secret data and fallback to defaults
     config.irc = {
         host: secret.irc.host || 'us.quakenet.org',
-        nick: secret.irc.nick || 'WoWIRCBot',
+        nick: secret.irc.nick || Date.now()%10000000 + 'WoWIRCBot',
         channels: secret.irc.channels || ['#WoWIRCBot']
     }
 }
