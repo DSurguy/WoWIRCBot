@@ -2,6 +2,7 @@ var irc = require('irc'),
 	http = require('http'),
 	mongo = require('mongodb').MongoClient,
 	config = require('./config.js'),
+	fs = require('fs'),
     Docs = require('./Docs.js');
 
 module.exports = WoWIRCBot;
@@ -9,19 +10,50 @@ module.exports = WoWIRCBot;
 function WoWIRCBot(){
 	var bot = this;
 
+	//handle any sort of exit
+	process.on("exit", function(code){
+
+		//finish writing out the log and then log an exit
+		
+		if( config.debug.logFile ){
+			bot.logFile.writing = false;
+			for( var i=0; i<bot.logFile.queue.length; i++ ){
+				fs.appendFileSync(config.debug.logFilePath, bot.logFile.queue.shift());
+			}
+		}
+
+		//now write an exit
+		if( config.debug.logFile ){
+			fs.appendFileSync(config.debug.logFilePath, "\n"+(new Date()).toISOString()+"EXIT: Bot exited with code "+code);
+		}
+		if( config.debug.console ){
+			console.log( "\n"+(new Date()).toISOString()+"EXIT: Bot exited with code "+code );
+		}
+
+	});
+
+
 	//before connecting to the IRC network, create a mongo connection
-	console.log("Attempting to connect to db...");
+	bot.log("\n-----\nBot started, attempting to connect to db...", 1);
 	mongo.connect(config.mongo.url, function(err, db){
+
+
+		if( err ){
+			bot.error(err.message);
+		}
+		else{
+			bot.log("Successfully connected to db.", 1);
+		}
 
 		bot.db = db;
 
 		//create a new IRC client
-		console.log("Attempting to connect to IRC on channels: "+config.irc.channels.join(","));
 		bot.client = new irc.Client(
 			config.irc.host, 
 			config.irc.nick, 
 			{
-				channels: config.irc.channels
+				channels: config.irc.channels,
+				autoConnect: false
 			}
 		);
 
@@ -31,7 +63,7 @@ function WoWIRCBot(){
 		    	//determine which command has been sent
 		    	var cmdEnd = message.indexOf(" ") !== -1 ? message.indexOf(" ") : message.length;
 		    	var command = message.slice(1, cmdEnd);
-		    	console.log(command);
+		    	bot.log( "Received command : '"+command+"' from user '"+from+"' for target '"+to+"'", 2);
 		    	//check to see if we're handling the command
 		    	if( bot.commands[command] ){
 		    		//this is a command we can handle, parse it!
@@ -41,9 +73,17 @@ function WoWIRCBot(){
 		});
 
 		bot.client.addListener('error', function(message) {
-		    console.log('error: ', message);
+		    console.error('IRC error: '+message);
+		});
+
+		//attempt to connect to the IRC server
+		bot.log("Attempting to connect to IRC on channels: "+config.irc.channels.join(","), 1);
+		bot.client.connect(1, function(){
+			bot.log("Connection to IRC server successful. Listening for messages.", 1);
 		});
 	});
+
+	
 }
 
 WoWIRCBot.prototype.parseMessage = function(from, to, command, params){
@@ -69,7 +109,6 @@ WoWIRCBot.prototype.help = function(from, to, params){
         target = from;
     //get the doc the user requested
     var requestedDoc = bot.routeHelp(args[0]);
-    //TODO: This may need to be async to avoid flood
     //loop through the lines of the doc and spit them out to the user
     for( var i=0; i<requestedDoc.length; i++ ){
         bot.client.say(target, requestedDoc[i]);
@@ -78,6 +117,9 @@ WoWIRCBot.prototype.help = function(from, to, params){
 
 //Router for help command
 WoWIRCBot.prototype.routeHelp = function(requestedArticle){
+	if( requestedArticle == "" ){
+		return Docs.Error("undefined");
+	}
     //grab the related help doc
     var regex = new RegExp("\\b"+requestedArticle+"\\b", "g");
     for( var i=0; i<Docs.Manifest.length; i++ ){
@@ -219,15 +261,14 @@ WoWIRCBot.prototype.getCharacter = function(realm, character, region, justChecki
 	//build the request string
 	var url = "http://"+this.db_region(region)+".battle.net/api/wow/character/"+realm+"/"+character+"?fields=guild,hunterPets,items,professions,progression,pvp,reputation,stats,talents",
 		bot = this;
+
 	//check the local database to see if we already have the character
-	console.log("Looking for char in database: "+character+" on "+realm+" for region "+region);
 	bot.db.collection("characters_"+region).find({name: character, realm: realm}).toArray(function(err,chars){
 		if( err ){
-			console.log("Error looking for character. "+e.message);
+			bot.error("Unable to search database for character, e: "+err.message);
 			return false;
 		}
 		//see if we got data
-		console.log(chars.length);
 		if( chars.length > 0 ){
 			//we got data, are we just checking to see if it exists?
 			if( justChecking ){
@@ -241,7 +282,6 @@ WoWIRCBot.prototype.getCharacter = function(realm, character, region, justChecki
 		}
 		else{
 			//make a get request to see if we can nab some data
-			console.log("Attempting to get char from API");
 			http.get(url, function(result){
 				var newChar,
 					data = "";
@@ -252,9 +292,10 @@ WoWIRCBot.prototype.getCharacter = function(realm, character, region, justChecki
 					newChar = JSON.parse(data);
 					if( newChar.status === "nok" ){
 						//this character does NOT exists
+
 						//are we just checking to see if it exists?
 						if( justChecking ){ 
-							callback(false); 
+							callback(false);
 						}
 						else{
 							//return the character
@@ -263,10 +304,9 @@ WoWIRCBot.prototype.getCharacter = function(realm, character, region, justChecki
 					}
 					else{
 						//we need to add this character to the database
-						console.log("Attempting to add character to the database");
 						bot.db.collection("characters_"+region).insert(newChar, function(err){
 							if( err ){
-								console.log("Error looking for character. "+e.message);
+								console.error("Unable to add character to database. e: "+err.message);
 								return false;
 							}
 							if( justChecking ){ 
@@ -280,7 +320,7 @@ WoWIRCBot.prototype.getCharacter = function(realm, character, region, justChecki
 					}
 				});
 			}).on('error', function(e){
-				console.log("ERRRROR: "+e.message);
+				console.error("Unable to retrieve character from API. e: "+e.message);
 			});
 		}
 	});
@@ -303,4 +343,72 @@ WoWIRCBot.prototype.commands = {
 	wowis: true,
 	amr: true,
     help: true
+};
+
+
+/*
+* 	Logging and Error Handling
+*/
+WoWIRCBot.prototype.log = function(message, level){
+	//format this message
+	var logMessage = "\n"+(new Date()).toISOString()+" LOG: "+message;
+
+	//attempt to log this to console
+	if( config.debug.console && config.debug.logLevel >= level && config.debug.logLevel > 0 ){
+		console.log(logMessage);
+	}
+
+	//attempt to log to file
+	if( config.debug.logFile && config.debug.logLevel >= level && config.debug.logLevel > 0 ){
+		this.addToLogFileQueue(logMessage);
+	}
+};
+
+WoWIRCBot.prototype.error = function(message){
+	//format this message
+	var errMessage = "\n"+(new Date()).toISOString()+" ERR: "+message;
+
+	//attempt to log this to console
+	if( config.debug.console && config.debug.logLevel > 0 ){
+		console.error(errMessage);
+	}
+
+	//attempt to log to file
+	if( config.debug.logFile && config.debug.logLevel > 0 ){
+		this.addToLogFileQueue(errMessage);
+	}
+
+	//see if we should die on error
+	if( config.debug.breakOnError ){
+		process.exit(1);
+	}
+};
+
+
+WoWIRCBot.prototype.logFile = {
+	queue: [],
+	writing: false
+}
+
+WoWIRCBot.prototype.addToLogFileQueue = function(message){
+	this.logFile.queue.push(message);
+	this.processLogFileQueue();
+};
+
+WoWIRCBot.prototype.processLogFileQueue = function(){
+	var bot = this;
+	if( bot.logFile.writing == false && bot.logFile.queue.length > 0 ){
+		bot.logFile.writing = true;
+		fs.appendFile(config.debug.logFilePath, bot.logFile.queue.shift(), function (err){
+			bot.logFile.writing = false;
+			//an error inside the log handler? Better just die.
+			if( err ){
+				console.log("Error while writing to log. " + logMessage);
+				process.exit(1);
+			}
+			else{
+				bot.processLogFileQueue();
+			}
+		});
+	}
 };

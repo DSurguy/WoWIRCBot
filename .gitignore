@@ -220,6 +220,7 @@ node_modules/
 #WoWIRCBot
 secret.js
 log.txt
+botLog.log
 
 #WebStorm
 .idea/

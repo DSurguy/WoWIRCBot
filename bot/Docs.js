@@ -32,8 +32,8 @@ var Articles = {
     //Error report stating help command was not recognized
     Error: function(request) {
         return [
-            "The command !help "+request+" was not recognized as a supported help document.",
-            "Please enter !help list to see supported documents"
+            "The command '!help <"+request+">' was not recognized as a supported help document.",
+            "Please enter '!help list' to see supported documents"
         ]
     }
 };
