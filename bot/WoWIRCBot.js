@@ -34,7 +34,7 @@ function WoWIRCBot(){
 
 
 	//before connecting to the IRC network, create a mongo connection
-	bot.log("\n-----\nBot started, attempting to connect to db...", 1);
+	bot.log("-----\nBot started, attempting to connect to db...", 1);
 	mongo.connect(config.mongo.url, function(err, db){
 
 
@@ -257,6 +257,60 @@ WoWIRCBot.prototype.amr_Region = function(region){
 };
 
 
+//!realm <realm> <region>
+WoWIRCBot.prototype.realm = function(from, target, params){
+	var bot = this,
+		args = params.split(" "),
+		region, realm, url;
+
+	if( args[0] ){
+		realm = args[0];
+	}
+	else if( config.wow.homeRealm ){
+		//use the home server
+		realm = config.wow.homeRealm;
+	}
+	else{
+		//we don't have a server to use!
+		bot.client.notice(from, "Unable to complete !wowis. No realm specified in request or in bot config. Please contact channel admin or supply a realm. See '!help wowis' for more information.");
+		return false;
+	}
+
+	if( args[1] ){
+		region = args[1];
+	}
+	else if( config.wow.homeRegion ){
+		//use the home region
+		region = config.wow.homeRegion;
+	}
+	else{
+		//we don't have a region to use!
+		bot.client.notice(from, "Unable to complete !wowis. No region specified in request or in bot config. Please contact channel admin or supply a realm. See '!help wowis' for more information.");
+		return false;
+	}
+
+	bot.getRealm(realm, region, function(realmData){
+		var status = realmData.status ? "\x0303Up" : "\x04Down",
+			queue = !realmData.queue ? "\x0303No" : "\x04Yes",
+			population;
+
+		//parse the population
+		switch(realmData.population){
+			case "low": population = "\x0308Low"; break;
+			case "medium": population = "\x0307Medium"; break;
+			case "high": population = "\x0304High"; break;
+			default: population = "\x0314Unknown"; break;
+		}
+		//spit out the status, WITH COLORS!
+		bot.client.say(target, "\x0310Realm: \x0306"+realm+"\x0310   Region: \x0306"+region);
+		bot.client.say(target, "\x0310Status: "+status+"\x0310   LoginQueue: "+queue+"\x0310   Population: "+population);
+	}, function(err){
+		bot.client.notice(from, err);
+	});
+
+};
+
+
 WoWIRCBot.prototype.getCharacter = function(realm, character, region, justChecking, callback){
 	//build the request string
 	var url = "http://"+this.db_region(region)+".battle.net/api/wow/character/"+realm+"/"+character+"?fields=guild,hunterPets,items,professions,progression,pvp,reputation,stats,talents",
@@ -325,6 +379,38 @@ WoWIRCBot.prototype.getCharacter = function(realm, character, region, justChecki
 		}
 	});
 };
+
+WoWIRCBot.prototype.getRealm = function(realm, region, callback, error){
+	var bot = this;
+	//build the realm url
+	url = "http://"+bot.db_region(region)+".battle.net/api/wow/realm/status?realms="+realm,
+	console.log(url);
+	//grab the realm data
+	http.get(url, function(result){
+		var data = "",
+			realmData;
+		result.on("data", function(chunk){
+			data += chunk;
+		});
+		result.on("end", function(){
+			//grab the first realm from the results
+			realmData = JSON.parse(data).realms[0];
+			//see if this realm matches what we're actually looking for
+			if( realmData.slug !== realm.toLowerCase() ){
+				error("Unable to get realm status, realm not found. Try replacing spaces with -, or check the realm list at http://"+bot.db_region(region)+".battle.net/wow/en/status");
+			}
+			else{
+				//return the realm
+				callback(realmData);
+			}
+			
+		});
+	}).on('error', function(e){
+		console.error("Unable to retrieve realm status. e: "+e.message);
+		error("Unable to get realm status, realm not found. Try replacing spaces with -, or check the realm list at http://"+bot.db_region(region)+".battle.net/wow/en/status");
+	});
+};
+
 WoWIRCBot.prototype.db_region = function(region){
 	switch(region){
 		case "us":
@@ -342,7 +428,8 @@ WoWIRCBot.prototype.db_region = function(region){
 WoWIRCBot.prototype.commands = {
 	wowis: true,
 	amr: true,
-    help: true
+    help: true,
+    realm: true
 };
 
 

@@ -60,7 +60,7 @@ else{
     //use defaults
     config.irc = {
         host: 'us.quakenet.org',
-        nick: '['+String.fromCharCode(95+Date.now()%10) + ']WoWBot',
+        nick: '['+String.fromCharCode(96+Date.now()%10) + ']WoWBot',
         channels: ['#WoWIRCBot']
     }
 }

@@ -5,12 +5,13 @@ var Articles = {
     Manifest: [
         {cmd: "wowis,!wowis", docMap: "Commands.wowis"},
         {cmd: "amr,!amr", docMap: "Commands.amr"},
-        {cmd: "list", docMap: "List"}
+        {cmd: "list", docMap: "List"},
+        {cmd: "realm, !realm", docMap: "Commands.realm"}
     ],
 
     List: [
         "\x0311"+"Available Help Docs:",
-        "wowis, amr"
+        "wowis, amr, realm"
     ],
 
     //WoWIRCBot command documentation
@@ -26,7 +27,13 @@ var Articles = {
             "This command will generate a link to AskMrRobot Gear Optimizer for the requested character.",
             "The realm and region are optional, they will default to the following: ",
             "Realm: \x0303"+config.wow.homeRealm+"\x0302   Region: \x0303"+config.wow.homeRegion,
-            "\x0315"+"Whisper this command to the bot for a private response!" ]
+            "\x0315"+"Whisper this command to the bot for a private response!" ],
+        realm: [
+            "\x0311"+"Syntax: !realm [<Realm>] [<Region>]",
+            "This command will generate current realm information for the requested realm.",
+            "The realm and region are optional, they will default to the following: ",
+            "Realm: \x0303"+config.wow.homeRealm+"\x0302   Region: \x0303"+config.wow.homeRegion,
+            "\x0315"+"Whisper this command to the bot for a private response!"]
     },
 
     //Error report stating help command was not recognized
