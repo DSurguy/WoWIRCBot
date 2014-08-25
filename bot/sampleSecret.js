@@ -1,10 +1,7 @@
 module.exports = {
-	mongo: {
-		hostname: "sub.domain.ext", //ex: www.mymongoserver.com or an ip address
-		port: 0, //default for localhost is 27017
-		username: "dbuser", 
-		password: "1234",
-		db: "wowircbot"
+	api: {
+		key: undefined,
+		locale: "en_US"
 	},
 	irc: {
 		host: "sub.domain.ext", //ex: us.quakenet.org
