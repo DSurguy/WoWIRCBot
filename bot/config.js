@@ -67,11 +67,34 @@ else{
 *   ADMIN LIST CONFIG
 **/
 if( secret.adminList ){
-    config.adminList = secret.adminList;
+    config.adminList = secret.adminList ? secret.adminList : undefined;
 }
 else{
     config.adminList = undefined;
 }
+
+/**
+*   FLOOD PREVENTION CONFIG
+**/
+if( secret.flood ){
+    config.flood = {
+        shortFloodCount: secret.flood.shortFloodCount ? secret.flood.shortFloodCount : 5,
+        shortFloodTime: secret.flood.shortFloodTime ? secret.flood.shortFloodTime : 5000,
+        shortFloodPenalty: secret.flood.shortFloodPenalty ? secret.flood.shortFloodPenalty : 300000,
+        longFloodCount: secret.flood.longFloodCount ? secret.flood.longFloodCount : 5,
+        maxFloodCount: secret.flood.maxFloodCount ? secret.flood.maxFloodCount : 100
+    };
+}
+else{
+    config.flood = {
+        shortFloodCount: 5,
+        shortFloodTime: 5000,
+        shortFloodPenalty: 300000,
+        longFloodCount: 5,
+        maxFloodCount: 100
+    };
+}
+
 
 /**
 *   DEBUGGING
