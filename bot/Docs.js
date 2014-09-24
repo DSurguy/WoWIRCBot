@@ -6,12 +6,13 @@ var Articles = {
         {cmd: "wowis,!wowis", docMap: "Commands.wowis"},
         {cmd: "amr,!amr", docMap: "Commands.amr"},
         {cmd: "list", docMap: "List"},
-        {cmd: "realm, !realm", docMap: "Commands.realm"}
+        {cmd: "realm, !realm", docMap: "Commands.realm"},
+        {cmd: "wowhead, !wowhead", docMap: "Commands.wowhead"}
     ],
 
     List: [
         "\x0311"+"Available Help Docs:",
-        "wowis, amr, realm"
+        "wowis, amr, realm, wowhead"
     ],
 
     //WoWIRCBot command documentation
@@ -33,6 +34,10 @@ var Articles = {
             "This command will generate current realm information for the requested realm.",
             "The realm and region are optional, they will default to the following: ",
             "Realm: \x0303"+config.wow.homeRealm+"\x0302   Region: \x0303"+config.wow.homeRegion,
+            "\x0315"+"Whisper this command to the bot for a private response!"],
+        wowhead: [
+            "\x0311"+"Syntax: !wowhead <Search>",
+            "This command will generate a link to a wowhead search for the provided terms.",
             "\x0315"+"Whisper this command to the bot for a private response!"]
     },
 

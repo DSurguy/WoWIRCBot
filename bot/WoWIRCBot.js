@@ -356,6 +356,33 @@ WoWIRCBot.prototype.amr_Region = function(region){
 	}
 };
 
+//!wowhead <search>
+WoWIRCBot.prototype.wowhead = function(from, target, params){
+
+	var bot = this,
+		args = params,
+		url = "http://www.wowhead.com/search?q="
+
+	//allow ( [a-zA-Z0-9] | [/] AS %2F | [-_'"] | [+] AS %2B | [\s] as + )
+
+	var slashExp = /\//g,
+		plusExp = /\+/g,
+		spaceExp = /\s/g,
+		cleanSearch = "";
+
+	cleanSearch = args;
+
+	cleanSearch = cleanSearch
+		.replace(slashExp, "%2f")
+		.replace(plusExp, "%2B")
+		.replace(spaceExp, "+");
+
+	url += cleanSearch;
+
+	bot.client.say(target, url);
+
+};
+
 //!realm <realm> <region>
 WoWIRCBot.prototype.realm = function(from, target, params){
 	var bot = this,
@@ -526,7 +553,8 @@ WoWIRCBot.prototype.commands = {
 	wowis: true,
 	amr: true,
     help: true,
-    realm: true
+    realm: true,
+    wowhead: true
 };
 
 /*
