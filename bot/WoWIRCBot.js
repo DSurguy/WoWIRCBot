@@ -335,7 +335,7 @@ WoWIRCBot.prototype.amr = function(from, target, params){
 	bot.getCharacter(realm, character, region, function(charExists){
 		if( charExists ){
 			//send the link to the target of the request
-			bot.client.say(target, "\x0314"+"!amr for "+args[0]+": http://www.askmrrobot.com/wow/gear/"+region+"/"+realm+"/"+character);
+			bot.client.say(target, "\x0314"+"!amr for "+args[0]+": http://www.askmrrobot.com/wow/player/"+region+"/"+realm+"/"+character);
 		}
 		else{
 			//send a message that the char doesn't exist to the target of the request
@@ -348,7 +348,7 @@ WoWIRCBot.prototype.amr_Region = function(region){
 		case "us":
 		case "usa":
 		default:
-			return "usa";
+			return "us";
 			break;
 		case "eu":
 			return "eu";
